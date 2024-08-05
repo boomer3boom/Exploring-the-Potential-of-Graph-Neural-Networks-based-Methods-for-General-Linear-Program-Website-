@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload LP Problem</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="/">Return</a></li>
+            <li><a href="#lp-problem">LP Problem</a></li>
+            <li><a href="#basis-result">SIB Basis & Optimal Basis</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        <div class="container">
+            <h1>Upload Your LP Problem</h1>
+            <form id="lp-form" action="/process_lp" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="lp-file">Upload LP Problem (in .npz format):</label>
+                    <input type="file" id="lp-file" name="lp-file" accept=".npz" required>
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+            <br>
+            <div id="result-container">
+                <div id="lp-problem">
+                    <h2>Submitted LP Problem</h2>
+                    <pre id="submitted-lp"></pre>
+                </div>
+                <div id="result-image">
+                    <h2>Visualization</h2>
+                </div>
+            </div>
+            <br>
+            <div id="basis-result" style="display:none;">
+                <h2>SIB Basis & Optimal Basis</h2>
+                <pre id="basis"></pre>
+            </div>
+        </div>
+    </div>
+    <script src="../static/js/upload.js"></script>
+</body>
+</html>

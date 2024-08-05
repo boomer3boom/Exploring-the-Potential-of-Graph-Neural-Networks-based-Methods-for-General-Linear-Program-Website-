@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualization Display</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Try It Yourself</h2>
+        <ul>
+            <li><a href="#" onclick="showREADME()">README</a></li>
+            <li><a href="upload.html">Upload LP Problem</a></li>
+        </ul>
+        <h2>Example Problems</h2>
+        <ul>
+            <li><a href="#" onclick="showImage('vertices_plot_800.png')">Example Test Plot 800</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_801.png')">Example Test Plot 801</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_802.png')">Example Test Plot 802</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_803.png')">Example Test Plot 803</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_804.png')">Example Test Plot 804</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_805.png')">Example Test Plot 805</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_806.png')">Example Test Plot 806</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_807.png')">Example Test Plot 807</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_808.png')">Example Test Plot 808</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_809.png')">Example Test Plot 809</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_810.png')">Example Test Plot 810</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_811.png')">Example Test Plot 811</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_812.png')">Example Test Plot 812</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_813.png')">Example Test Plot 813</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_814.png')">Example Test Plot 814</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_815.png')">Example Test Plot 815</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_816.png')">Example Test Plot 816</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_817.png')">Example Test Plot 817</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_818.png')">Example Test Plot 818</a></li>
+            <li><a href="#" onclick="showImage('vertices_plot_819.png')">Example Test Plot 819</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        <div id="readme-content" style="display: none;">
+            <h1>README</h1>
+            <p>Welcome to the LP Problem Visualization Tool and Smart Initial Basis (SIB). 
+                This tool allows you to visualize various linear programming (LP) problems in 3D and see the SIB prediction.</p>
+            <p><strong>The Model</strong></p>
+            <p>The underlying model used is two basic GNN one for normal variable and the other for slack variable. 
+                The model was trained on random synthestic LP feasible and bounded problems with a total of 1200 variables (500 normal variable and 700 slacks)
+                and with 700 constraints.</p>
+            <p><strong>The Visualisation</strong></p>
+            <p>The visualisation samples a few intersection between LP problems then preform PCA to 3 components for visualisation. The sampled inersections are
+                user to generate a convex hull for the polyhedron. In our Example problem we did this all all constrain intersection however in the problem you
+                upload, only a sample is taken and so does not fully present the polyhedron generated from the LP problem.
+            </p>
+            <p><strong>How to Use:</strong></p>
+            <ul>
+                <li><strong>Upload LP Problem:</strong> Use the "Upload LP Problem" link to upload your LP problem files. Supported format: .npz.</li>
+                <ul>
+                    <li>Ensure your problem has between 3 to 500 variables, and 1 to 700 slack variables</li>
+                    <li>Ensure your problem has between 1 to 700 constraints</li>
+                    <li>It would be best that your LP problem is feasible and bounded as our model was not trained to identify them</li>
+                    <li>Please include the slack variables in your LP problem for both the objective coefficients and constraint coefficients</li>
+                    <li>Set your files objective coefficients key as 'c', the constraint RHS as 'b' and constraint coefficients as 'A'</li>
+                    <li>Please meet the expectation above, otherwise the code will not compile</li>
+                    <li>We will scale your problem coefficients to be between -1 and 1 you won't need to do this yourself</li>
+                </ul>
+                <br>
+                <li><strong>View Example Problems:</strong> Click on the links under "Example Problems" to view sample plots of LP problems.</li>
+                <ul>
+                    <li>The black dot in the diagram is the default basis, that is, only slack variables are basic</li>
+                    <li>The red dot in the diagram is the optimal basis.</li>
+                    <li>The green dot in the diagram is the model's predicted basis for this problem.</li>
+                    <li>The grey dots represents a sample of the intersection between two constraints in the LP problem.</li>
+                    <li>We also displayed the number of Pivots our revised simplex algorithm needed to reach optimality from different basis.</li>
+                    <li>In our example problem, we used the revised simplex algorithm with to pivot the basis to optimality with a time limit of 30min.</li>
+                    <li>You can use the button provided to zoom in and hide the grey dots.</li>
+                </ul>
+            </ul>
+            <p>If you encounter any issues or have questions, please refer to the documentation.</p>
+        </div>
+
+        <div id="visualization-section">
+            <h1>Visualization Display</h1>
+            <img id="visualization" src="../static/images/images_zoom_out/hidden_vertices/vertices_plot_800.png" alt="3D Visualization of LP Vertices">
+            <br>
+            <div class="description-container">
+                <p id="default-basis">Pivots to optimal with Default Basis: 74,799</p>
+                <p id="sib-basis">Pivots to optimal with Smart Initial Basis: 150,000</p>
+            </div>
+            <div class="button-container">
+                <div class="button-group">
+                    <p id="zoom-level-text">Current Zoom Level: Zoom Out</p>
+                    <button onclick="toggleZoom()">Toggle Zoom Level</button>
+                </div>
+                <div class="button-group">
+                    <p id="vertex-visibility-text">Vertices Visibility: Hidden</p>
+                    <button onclick="toggleVertexVisibility()">Toggle Vertices Visibility</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../static/js/scripts.js"></script>
+</body>
+</html>
