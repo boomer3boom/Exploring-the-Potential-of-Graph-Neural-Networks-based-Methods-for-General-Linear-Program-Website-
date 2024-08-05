@@ -1,0 +1,214 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.sidebar {
+    width: 250px;
+    background: #333;
+    color: white;
+    padding: 15px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background: #575757;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto; /* Ensure scrolling if content is too large */
+}
+
+.container {
+    width: 100%;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.container h1, .container h2 {
+    margin-bottom: 20px;
+}
+
+.container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    margin-right: 10px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.button-group {
+    margin-right: 200px;
+    text-align: center;
+}
+
+.button-group:last-child {
+    margin-right: 0;
+}
+
+.button-label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #ddd;
+}
+
+#result-container {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+#lp-problem {
+    flex: 0 0 30%; /* Takes up 30% of the width */
+    margin-right: 0; /* Remove margin */
+    text-align: left;
+    max-height: 640px; /* Adjust height to fit your layout */
+    overflow: auto; /* Scrollable content */
+}
+
+#result-image {
+    flex: 0 0 70%; /* Takes up 70% of the width */
+    text-align: right;
+    max-height: 800px; /* Adjust height as needed */
+    overflow: auto; /* Ensure content can scroll if too large */
+}
+
+#basis-result {
+    width: 100%;
+    max-height: 400px; /* Adjust height as needed */
+    overflow: auto; /* Scrollable content */
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+#submitted-lp, #basis {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: monospace;
+    max-width: 100%;
+}
+
+/* Ensuring consistent sizing */
+.container, #result-container {
+    width: 100%; /* Adjust width to ensure consistency */
+    max-width: 1200px; /* Limit max-width to avoid large screens causing issues */
+}
+
+#result-container {
+    display: flex;
+    gap: 0; /* Ensures no gap between the children */
+}
+
+#lp-problem, #result-image {
+    flex-grow: 1; /* Allow them to grow as needed */
+    margin: 0; /* Ensure no margins are causing gaps */
+}
+
+#readme-content {
+    display: none; /* Initially hidden */
+}
+
+/* Additional styling for README content, if needed */
+#readme-content h1 {
+    margin-bottom: 20px;
+}
+
+#readme-content p {
+    margin-bottom: 10px;
+}
+
+/* Ensure the description container centers its content */
+.description-container {
+    text-align: center; /* Centers the text within this container */
+    margin: 20px 0; /* Optional: adds space above and below the container */
+}
+
+/* Ensure that other container elements are correctly aligned */
+.button-container {
+    text-align: center; /* Center buttons if needed */
+}
