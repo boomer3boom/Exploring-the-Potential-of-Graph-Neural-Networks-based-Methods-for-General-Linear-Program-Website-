@@ -237,6 +237,7 @@ class SIB():
             buf.seek(0)
             image_base64 = base64.b64encode(buf.read()).decode('utf-8')
             buf.close()
+            plt.close()
 
             return image_base64
         else:
