@@ -24,7 +24,19 @@ document.getElementById('lp-form').addEventListener('submit', function(event) {
             basisResultElement.style.display = 'none';
         } else {
             submittedLPElement.textContent = `A: ${JSON.stringify(data['A'], null, 2)}\n\nb: ${JSON.stringify(data['b'], null, 2)}\n\nc: ${JSON.stringify(data['c'], null, 2)}`;
-            basisElement.textContent = `Accuracy: ${data['Accuracy']}\n\nSIB Basis:\n${data['SIB Basis']}\n\nOptimal Basis:\n${data['Optimal Basis']}`;
+
+            if (data.obj_gap !== undefined && data.con_gap !== undefined) {
+                basisElement.innerHTML = `
+                    <h2>IPMGNN Results</h2>
+                `;
+
+                basisElement.textContent = `Inference Time: ${data['inference_time']}\nObjective Gap: ${data['obj_gap']}\n\nConstraint Gap: ${data['con_gap']}\n\nPrediction:\n${data['pred']}\n\n\n\nOptimal:\n${data['optimal']}`;
+            } else {
+                basisElement.innerHTML = `
+                    <h2>SIB/LTP Results</h2>
+                `;
+                basisElement.textContent = `Inference Time: ${data['inference_time']}\nAccuracy: ${data['Accuracy']}\n\nSIB Basis:\n${data['SIB Basis']}\n\n\n\nOptimal Basis:\n${data['Optimal Basis']}`;
+            }
 
             if (data.image_base64) {
                 const imageElement = document.createElement('img');

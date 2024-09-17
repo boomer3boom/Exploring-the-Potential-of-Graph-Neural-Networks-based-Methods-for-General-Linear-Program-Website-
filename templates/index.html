@@ -40,44 +40,122 @@
     <div class="content">
         <div id="readme-content" style="display: none;">
             <h1>README</h1>
-            <p>Welcome to the LP Problem Visualization Tool and Smart Initial Basis (SIB). 
-                This tool allows you to visualize various linear programming (LP) problems in 3D and see the SIB prediction.</p>
-            <p><strong>The Model</strong></p>
-            <p>The underlying model used is two basic GNN one for normal variable and the other for slack variable. 
-                The model was trained on random synthestic LP feasible and bounded problems with a total of 1200 variables (500 normal variable and 700 slacks)
-                and with 700 constraints.</p>
-            <p><strong>The Visualisation</strong></p>
-            <p>The visualisation samples a few intersection between LP problems then preform PCA to 3 components for visualisation. The sampled inersections are
-                user to generate a convex hull for the polyhedron. In our Example problem we did this all all constrain intersection however in the problem you
-                upload, only a sample is taken and so does not fully present the polyhedron generated from the LP problem.
+            <p>Welcome to the LP Problem quickstart Neural Network tool. The models behind this website attempts to uses the Smart Initial Basis, Learn To Pivot, 
+                and Integer-Program Message Passing Frame to develop an initial solution for tradition solvers including the Simplex Method and Interior Point Method.
+                <br><br>
+                We provided some examples on the side bar with visualisations. These problems are LP that were generated at random and used to train the Smart Initial 
+                Basis. You can use toggle the zoom button and vertices button. The zoom button will zoom into the solution, and the vertices button will show some vertiecs 
+                of the LP problem. The black dot represents the origin, red the optimal basis, and green the starting basis. We also provide the number of pivots required 
+                starting from the origin to the optimal solution, and the prediction to the optimal solution. We did this with a 30 minute limit. 
+                <br><br>
+                NOTE: The 3D visualisation is not a direct indication of the model's preformance. This is because PCA-3 was preformed on the original LP problem to visualise it. 
             </p>
-            <p><strong>How to Use:</strong></p>
+            <p><strong>The Model</strong></p>
+            <pr> Smart Initial Basis (SIB):This model aims to create an initial basis for the simplex method.  The model used was a GNN model, and the LP problem is transformed 
+                into a bi-partite graph with two types of nodes, the variables and the constraints. The features of variable node includes the scaler value in objective function 
+                and the number of non-zero in constraint matrix. Similarly, the constraint node feature includes the constraint RHS constants, and number of non zeros in the 
+                constraint matrix.</pr>
+            <br><br>
+            <pr> Learn To Pivot (LTP): This model aims to pivot a starting basis into the optimal basis. The structure and feature of this model is similar to SIB.</pr>
+            <br><br>
+            <pr> Integer Program Message Passing Neural Network (IPMGNN): This model aims to replicate the Interior-Point Method. The model used was a GNN (Specificially GCN),
+                and the problem was transformed into a tri-partite graph with three types of nodes, the variable, the constraints, and the objective. For the variable, and
+                constraint nodes, the mean and standard deviation of their respective column and row were used as features. The objective node used the mean and standard deviation
+                of the objective vector.
+            </pr>
+            
+            <p><strong>The Data Used</strong></p>
+            <p>SIB: The model was trained on 800 LP problem which were randomly generated. Please view our source code for the specifics. Theese problems are all feasible and bounded
+                with 500 variables and 700 constraints, hence including slack variables the total variables is 1200. 200 LP problems were used to test the model.
+            </p>
+            <p>LTP: The model was trained on 100 LP problems, the same as the ones used in SIB. However, due to the time required to generate the pivots from the pivoting expert, 800
+                LP problems could not be used to train the model.
+            </p>
+            <p>IPMGNN: The model was trained on a total of 100000 data, which includes Set Cover, Independent Set, Auction and Capcitated Facility Problem. The Set Cover problem had 
+                up to 700 rows and columns. The independent set problem had up to 700 nodes. The auction problem had up to 500 items, and 550 bids. The Capcitated Facility problem had 
+                up to 29 customers and 24 facilities. 
+            </p>
+            <p><strong>How to use example visualisation and other details:</strong></p>
             <ul>
-                <li><strong>Upload LP Problem:</strong> Use the "Upload LP Problem" link to upload your LP problem files. Supported format: .npz.</li>
-                <ul>
-                    <li>Ensure your problem has between 3 to 500 variables, and 1 to 700 slack variables</li>
-                    <li>Ensure your problem has between 1 to 700 constraints</li>
-                    <li>It would be best that your LP problem is feasible and bounded as our model was not trained to identify them</li>
-                    <li>Please include the slack variables in your LP problem for both the objective coefficients and constraint coefficients</li>
-                    <li>Set your files objective coefficients key as 'c', the constraint RHS as 'b' and constraint coefficients as 'A'</li>
-                    <li>Please meet the expectation above, otherwise the code will not compile</li>
-                    <li>We will scale your problem coefficients to be between -1 and 1 you won't need to do this yourself</li>
-                </ul>
-                <br>
-                <li><strong>View Example Problems:</strong> Click on the links under "Example Problems" to view sample plots of LP problems.</li>
-                <ul>
-                    <li>The black dot in the diagram is the default basis, that is, only slack variables are basic</li>
-                    <li>The red dot in the diagram is the optimal basis.</li>
-                    <li>The green dot in the diagram is the model's predicted basis for this problem.</li>
-                    <li>The grey dots represents a sample of the intersection between two constraints in the LP problem.</li>
-                    <li>We also displayed the number of Pivots our revised simplex algorithm needed to reach optimality from different basis.</li>
-                    <li>In our example problem, we used the revised simplex algorithm with to pivot the basis to optimality with a time limit of 30min.</li>
-                    <li>You can use the button provided to zoom in and hide the grey dots.</li>
-                </ul>
+                <li>Use Toggle Zoom Level to zoom into the problem at 3 levels: Out, Mid, In.</li>
+                <li>Use Toggle Vertices Visibility to hide/display the hidden vertices for the problem's polyhedron.</li>
+                <li>The <span style="color:black;">Black</span> dot represents the origin (0, 0, 0).</li>
+                <li>The <span style="color:green;">Green</span> dot represents the SIB's initial basis prediction.</li>
+                <li>The <span style="color:red;">Red</span> dot represents the optimal basis for the problem.</li>
+                <li>The <span style="color:grey;">Grey</span> dot represents the vertices of the problem's polyhedron.</li>
+                <li>In some example, the Green dot may apear further away from the Red dot than the Black dot. This is not a
+                    clear indication of the prediction. We provide the pivots required with the Revised Simplex Method from
+                    the black and green dots.</li>
             </ul>
-            <p>If you encounter any issues or have questions, please refer to the documentation.</p>
+            <p><strong>How to use our provided models</strong></p>
+            <pr>SIB: Please upload your problem as a npz file with keys:
+            <ul>
+                <li> The method returns the variables are in the predicted basis. For example [0, 1, 5] means the variable in index 0, 1, and 5 corresponding to the objective coefficient is in the basis.</li>
+                <li>'c': The objective coefficient inclduing slack, stored as a numpy array.</li>
+                <li>'A': The constraint coefficient including slack, stored as a numpy array.</li>
+                <li>'b': The constraint RHS, stored as a numpy array.</li>
+                <li>We will access your file with the following code: </li>
+            </ul>
+            <pre><code>
+                c = data['c']
+                A = data['A']
+                b = data['b']
+            </code></pre>
+            </pr>
+            <pr>LTP: Please upload your problem as a npz file with keys:
+                <ul>
+                    <li> The method returns the variables are in the predicted basis after pivoting. For example [0, 1, 5] means the variable in index 0, 1, and 5 corresponding to the objective coefficient is in the basis.</li>
+                    <li>'c': The objective coefficient inclduing slack, stored as a numpy array.</li>
+                    <li>'A': The constraint coefficient including slack, stored as a numpy array.</li>
+                    <li>'b': The constraint RHS, stored as a numpy array.</li>
+                    <li>'basis': The basis you want the model to pivot from, stored as a numpy array.</li>
+                    <li>We will access your file with the following code: </li>
+                </ul>
+                <pre><code>
+                    c = data['c']
+                    A = data['A']
+                    b = data['b']
+                    basis = data['basis']
+                </code></pre>
+            </pr>
+            <pr>IPMGNN: Please upload your problem as a pkl file:
+                <ul>
+                    <li> The method attempts to replicate the IPM in steps of 8. For example if:</li>
+                    <li> result = <br>
+                        [[0.5866518020629883, 0.16453507542610168, 0.10403640568256378, 0.05939660221338272, 0.0, 0.04405095800757408, 0.008589258417487144, 0.09084194898605347], <br>
+                        [0.5871016383171082, 0.16447892785072327, 0.10803598165512085, 0.06020689755678177, 0.0, 0.04492228478193283, 0.008605537936091423, 0.09117642045021057]]</li>
+                    <li> Then result[0] represents the 8 IPM step of the variable in index 0. Hence wise result[0][0] represents the first step of variable indexed at 0. </li>
+                    <li> We retrieve the true result from the IPM method with the following code: (please see our repository for linprog accessed in ../IPMGNN_folder/solver/linprog.py)</li>
+                </ul>
+                <pre><code>
+                    sol = linprog(c.numpy(),
+                    A_ub=A_ub,
+                    b_ub=b_ub,
+                    A_eq=A_eq, b_eq=b_eq, bounds=bounds,
+                    method='interior-point', callback=lambda res: res.x)
+                    x = np.stack(sol.intermediate, axis=1)
+                </code></pre>
+                <ul>
+                    <li>Please append (A, b, c) as a tuple in the first index of a list. Below is how we store ours:</li>
+                </ul>
+                <pre><code>
+                    ips = []
+                    ips.append((torch.from_numpy(A).to(torch.float), torch.from_numpy(b).to(torch.float), torch.from_numpy(c).to(torch.float)))
+                    directory = # Your directory
+                    with gzip.open(directory, "wb") as file:
+                        pickle.dump(ips, file)
+                </code></pre>
+                <ul>
+                    <li>We will access your file with the following code:</li>
+                </ul>
+                <pre><code>
+                    ip_pkgs = pickle.load(file)
+                    A, b, c = ip_pkgs[0]
+                </code></pre>
+            </pr>
+            <p>If you encounter any issues or have questions, please refer to the documentation or our repository.</p>
+            <p>We acknowledge the authors referenced in our papers which helped layed the foundation to this website. We directly used codes [Qian et al., 2023] to train our IPMGNN model.</p>
         </div>
-
         <div id="visualization-section">
             <h1>Visualization Display</h1>
             <img id="visualization" src="../static/images/images_zoom_out/hidden_vertices/vertices_plot_800.png" alt="3D Visualization of LP Vertices">

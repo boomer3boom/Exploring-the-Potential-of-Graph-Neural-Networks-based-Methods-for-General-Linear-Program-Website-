@@ -157,12 +157,13 @@ button:hover {
 #basis-result {
     width: 100%;
     max-height: 400px; /* Adjust height as needed */
-    overflow: auto; /* Scrollable content */
+    overflow: auto; /* Allows scrolling if content is too large */
     padding: 10px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
+    word-wrap: break-word; /* Ensures long words or text break properly */
 }
 
 #submitted-lp, #basis {

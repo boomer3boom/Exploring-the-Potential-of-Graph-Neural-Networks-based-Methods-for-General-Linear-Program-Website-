@@ -14,12 +14,14 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+import time
 
 class SIB():
     def __init__(self, primal_path, slack_path):
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # Load the Model Parameter
-        primal_load = torch.load(primal_path, map_location=torch.device('cpu'))
-        slack_load = torch.load(slack_path, map_location=torch.device('cpu'))
+        primal_load = torch.load(primal_path, map_location=self.device)
+        slack_load = torch.load(slack_path, map_location=self.device)
         
         # Generate The Model
         input_dim = 2
@@ -29,6 +31,9 @@ class SIB():
 
         self.primal_ml.load_state_dict(primal_load['model_state_dict'])
         self.slack_ml.load_state_dict(slack_load['model_state_dict'])
+
+        self.primal_ml.to(self.device)
+        self.slack_ml.to(self.device)
 
         self.primal_ml.eval()
         self.slack_ml.eval()
@@ -300,14 +305,21 @@ class SIB():
 
         # Transform to Bipartite Graph
         input_graph = lp_to_bipartite_graph(c_slack, A_slack, b_combined, 1200, 700)
-
+        input_graph.to(self.device)
+        start_time = time.time()
+        
         # Inference and get probabilities
         with torch.no_grad():
             # Forward pass through the primal model
-            primal_output = self.primal_ml(input_graph)
+            try:
+                primal_output = self.primal_ml(input_graph)
+            except Exception as e:
+                print(e)
 
             # Forward pass through the slack model
             slack_output = self.slack_ml(input_graph)
+        end_time = time.time()
+        inference_time = end_time - start_time
         
         # Keep only the first k elements from slack_output and first j elements from primal_output
         filtered_primal_output = primal_output[:number_of_variables]
@@ -339,4 +351,4 @@ class SIB():
         predicted_basis_indices = np.where(result == 1)[0].tolist()
         optimal_basis_indices = np.where(optimal_basis == 1)[0].tolist()
 
-        return predicted_basis_indices, optimal_basis_indices, accuracy*100
+        return predicted_basis_indices, optimal_basis_indices, accuracy*100, inference_time

@@ -12,7 +12,7 @@
         <ul>
             <li><a href="/">Return</a></li>
             <li><a href="#lp-problem">LP Problem</a></li>
-            <li><a href="#basis-result">SIB Basis & Optimal Basis</a></li>
+            <li><a href="#basis-result">Results</a></li>
         </ul>
     </div>
     <div class="content">
@@ -21,7 +21,15 @@
             <form id="lp-form" action="/process_lp" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="lp-file">Upload LP Problem (in .npz format):</label>
-                    <input type="file" id="lp-file" name="lp-file" accept=".npz" required>
+                    <input type="file" id="lp-file" name="lp-file" accept=".npz,.pkl" required>
+                </div>
+                <div class="form-group">
+                    <label for="method">Select Method:</label>
+                    <select id="method" name="method" required>
+                        <option value="method1">SIB</option>
+                        <option value="method2">LTP</option>
+                        <option value="method3">IPMGNN</option>
+                    </select>
                 </div>
                 <button type="submit">Submit</button>
             </form>
@@ -37,7 +45,6 @@
             </div>
             <br>
             <div id="basis-result" style="display:none;">
-                <h2>SIB Basis & Optimal Basis</h2>
                 <pre id="basis"></pre>
             </div>
         </div>
