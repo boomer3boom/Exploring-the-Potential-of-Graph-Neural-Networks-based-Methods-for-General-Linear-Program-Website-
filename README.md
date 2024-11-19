@@ -1,1 +1,2 @@
 Title: Exploring the Potential of Foundational Models on GNN for Linear Programs - Website
+This repository contains the code base for the website discussed in paper ____. The website primarily demonstrates how different GNN models generate an initial greedy starting point, from which the Simplex or Interior Point Method can pivot to optimality faster. The website contains three GNN for users to experiment, these are Smart Initial Basis, Learn To Pitovt, and Interior Point Message Passing Neural Network (IPMGNN).
