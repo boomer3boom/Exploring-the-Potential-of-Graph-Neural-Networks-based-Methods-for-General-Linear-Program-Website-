@@ -27,6 +27,8 @@ Dependencies are listed in `requirements.txt`. Please ensure you download compat
    git clone [repository_url]
    cd [repository_folder]
 
+2. Download the required dependencies:
+   `see requirements.txt`
 Once cloned and dependencies are set up, just run app.py (ie python app.py). This will bring you to the local host on port 5000 and you can play with the website. Additionally, you will also have to change the location of files to match your own file locations.
 
 Structure of Code Base:
