@@ -1,9 +1,32 @@
-Title: Exploring the Potential of Foundational Models on GNN for Linear Programs - Website
-This repository contains the code base for the website discussed in paper ____. The website primarily demonstrates how different GNN models generate an initial greedy starting point, from which the Simplex or Interior Point Method can pivot to optimality faster. The website contains three GNNs for users to experiment with: Smart Initial Basis, Learn To Pitovt, and Interior Point Message Passing Neural Network (IPMGNN).
+# Exploring the Potential of Foundational Models on GNN for Linear Programs
 
-We use Python 3.10.13, and our dependencies are listed in requirements.txt. However, please note that depending on your GPU/CPU, you may need to download different versions of Torch and other Torch-related dependencies. For the GPU, we use NVIDIA GeForce RTX 3090 (2 GPUs available on the system) with Cuda 12.0. 
+Welcome to the repository accompanying the paper **[Insert Paper Title Here]**. This project features a website that demonstrates how various Graph Neural Network (GNN) models can generate an initial greedy starting point, enabling faster convergence to optimality using optimization techniques such as the Simplex Method or Interior Point Method.
 
-How to use: 
+The website allows users to experiment with the following pre-trained GNN models:
+
+- **Smart Initial Basis (SIB)**
+- **Learn To Pivot (LTP)**
+- **Interior Point Message Passing Neural Network (IPMGNN)**
+
+---
+
+## We Tested This Website On:
+
+- **Python version**: 3.10.13  
+- **GPU**: NVIDIA GeForce RTX 3090 (2 GPUs available)  
+- **CUDA version**: 12.0  
+
+Dependencies are listed in `requirements.txt`. Please ensure you download compatible versions of PyTorch and other Torch-related packages based on your hardware setup.
+
+---
+
+## Getting Started
+
+1. Clone this repository:
+   ```bash
+   git clone [repository_url]
+   cd [repository_folder]
+
 Once cloned and dependencies are set up, just run app.py (ie python app.py). This will bring you to the local host on port 5000 and you can play with the website. Additionally, you will also have to change the location of files to match your own file locations.
 
 Structure of Code Base:
