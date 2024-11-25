@@ -34,11 +34,21 @@ Dependencies are listed in `requirements.txt`. Please ensure you download compat
    ```bash
    python app.py
 
-Once cloned and dependencies are set up, just run app.py (ie python app.py). This will bring you to the local host on port 5000 and you can play with the website. Additionally, you will also have to change the location of files to match your own file locations.
+---
 
-Structure of Code Base:
-ipmgnn.pt, pivot_learner.pth, primal.pth, and slack.pth are all models corresponding to their respective GNN. These have all been previous trained already, refer to ___. 
+## Codebase Structure
 
-IPMGNN.py, LTP.py, SIB.py, arch.py, transformer.py, and IPMGNN_folder are python support files that are required to unpack GNN models so they can digest data into and output results.
+The codebase is organized into the following components:
 
-app.py, static, and templates are related to the structure of the websites. 
+### Pre-trained Models
+- **`ipmgnn.pt`**, **`pivot_learner.pth`**, **`primal.pth`**, and **`slack.pth`**  
+  These files contain pre-trained models for their respective GNN architectures. Refer to [documentation/notes] for details on their training process and usage.
+
+### Python Support Files
+- **`IPMGNN.py`**, **`LTP.py`**, **`SIB.py`**, **`arch.py`**, **`transformer.py`**, and the **`IPMGNN_folder`**  
+  These files provide the essential Python modules required to load, process, and utilize the GNN models. They handle data ingestion and model inference.
+
+### Web Application Components
+- **`app.py`**, **`static`**, and **`templates`**  
+  These files and directories define the web application's structure, including backend logic, static assets (e.g., CSS, JavaScript), and HTML templates for rendering the user interface.
+
