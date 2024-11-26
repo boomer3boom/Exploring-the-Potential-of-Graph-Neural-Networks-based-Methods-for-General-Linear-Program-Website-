@@ -30,7 +30,9 @@ Dependencies are listed in `requirements.txt`. Please ensure you download compat
 2. Download the required dependencies: \
    `see requirements.txt on our dependencies but download the packages that are compatible with your setup`
 
-3. Run the app:
+3. You may need to change some file paths based on your directory.
+
+4. Run the app:
    ```bash
    python app.py
 
