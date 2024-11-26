@@ -1,19 +1,29 @@
-import os
+"""
+Contains the LTP architecture of GCN and LPDDataset.
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch_geometric.nn import GCNConv, global_mean_pool
 from torch_geometric.data import Data, Dataset, Batch
+import os
+import re
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree  # Importing required utilities
 
-# Define GCNConv class
 class GCNConv(MessagePassing):
+    """
+    Adjust the GCNConv slightly mainly the self-loop edge.
+    """
     def __init__(self, in_channels, out_channels):
         super(GCNConv, self).__init__(aggr='add')  # "Add" aggregation
         self.lin = nn.Linear(in_channels, out_channels)
 
     def forward(self, x, edge_index, edge_attr):
+        """
+        Adjust the GCNConv slightly mainly the self-loop edge. 
+        Also normalise these edge attributes.
+        """
         # Add self-loops and calculate normalization
         edge_index, edge_attr = add_self_loops(edge_index, edge_attr, fill_value=1.0, num_nodes=x.size(0))
         row, col = edge_index
@@ -31,37 +41,40 @@ class GCNConv(MessagePassing):
         # aggr_out is the aggregated message
         return self.lin(aggr_out)
 
-class GCN(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
-        super(GCN, self).__init__()
+class PivotGCN(nn.Module):
+    """
+    Specify our PivotGCN Architecture
+    """
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1):
+        super(PivotGCN, self).__init__()
+        self.convs = nn.ModuleList()
+        self.convs.append(GCNConv(input_dim, hidden_dim))
+        for _ in range(num_layers - 1):
+            self.convs.append(GCNConv(hidden_dim, hidden_dim))
+        #self.fc1 = nn.ReLU(hidden_dim, hidden_dim)
+        #self.fc1 = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_dim, output_dim)
+        self.fc_optimal = nn.Linear(hidden_dim, 1)
+        
+    def forward(self, x, edge_index, edge_attr, batch):
+        for count, conv in enumerate(self.convs):
+            x = F.tanh(conv(x, edge_index, edge_attr))
 
-        self.conv1 = GCNConv(input_dim, hidden_dim)
-        self.conv2 = GCNConv(hidden_dim, hidden_dim)
-        #self.conv3 = GCNConv(hidden_dim+32, hidden_dim)
-        self.prelu = nn.PReLU()
-        self.dropout = nn.Dropout(p=0.5)
-        self.lin = nn.Linear(hidden_dim, 1)  # Output dimension is 1 for binary classification
+        out = F.sigmoid(self.fc2(x))
 
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        #print(x[1500:1700])
-        #x = torch.cat((x[:, :1], x[:, 2:]), dim=1)
-        #print("x shape after removing the second feature:", x.shape)
-        # Step 1: Message Passing from Variable to Constraint node
-        x = F.tanh(self.conv1(x, edge_index, edge_attr))
-        #x = self.dropout(x)
-        #print(x[:10])
-        # Step 2: Message Passing from Constraint to Variable node
-        #x = self.prelu(self.conv2(x, edge_index, edge_attr))
-        #print(x[:10])
-        x = self.lin(x)  # Slice to get only the first 500 elements
-        result = torch.sigmoid(x)
-        return result  # Apply sigmoid to get probabilities (0 to 1)
+        graph_embedding = global_mean_pool(x, batch)
+        optimal = torch.sigmoid(self.fc_optimal(graph_embedding))
+        
+        return out, optimal
 
 class LPDataset(Dataset):
-    def __init__(self, graphs_path, start, end):
+    """
+    Speccifies the LP-Dataset graph for feeding into the model.
+    """
+    def __init__(self, graphs_path, end=8000):
         self.graphs_path = graphs_path
-        self.graph_files = ["bipartite_graph_"+str(f)+".pt" for f in range(start, end)]
+        self.graph_files = [f for count, f in enumerate(os.listdir(graphs_path)) if f.startswith("bipartite_graph_") and f.endswith(".pt") and count < end]
+    
     def __len__(self):
         return len(self.graph_files)
 

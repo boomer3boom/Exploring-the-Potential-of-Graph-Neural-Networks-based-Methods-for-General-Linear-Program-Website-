@@ -3,7 +3,7 @@ from torch_geometric.loader import DataLoader
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pivot_arch import *
+from ML.pivot_arch import *
 from torch_geometric.data import Data
 from sklearn.model_selection import train_test_split
 import os
@@ -14,11 +14,14 @@ import time
 class LTP:
 
     def __init__(self, path):
+        """
+        Initilise the model.
+        """
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = PivotGCN(input_dim=3, hidden_dim=128, output_dim=2).to(self.device)
         optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
-        checkpoint_path = "/home/ac/Learning_To_Pivot/checkpoint2.pth"
-        if os.path.exists(checkpoint_path):
+        checkpoint_path = path
+        if os.path.exists(path):
             checkpoint = torch.load(checkpoint_path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -26,6 +29,9 @@ class LTP:
         self.model.eval()
 
     def load_lp(self, data):
+        """
+        load the file
+        """
         c = data['c']
         A = data['A']
         b = data['b']
@@ -34,10 +40,16 @@ class LTP:
         return A, b, c, basis
     
     def normalize(self, x, min_val, max_val):
+        """
+        Normalise the data
+        """
         return (x - min_val) / (max_val - min_val)
     
     #Return the uniform detail (just the features and edge)
     def bipartite_graph_details(self, c, A, b):
+        """
+        Convert data into a bipartite graph.
+        """
         num_vars = 1200
         num_constraints = len(b)
 
@@ -78,6 +90,9 @@ class LTP:
         return variable_features, constraint_features, edge_index, edge_attr
     
     def get_bipartite(self, variable_features, constraint_features, edge_index, edge_attr, cur_basis):
+        """
+        Collect bipartite graph detail.
+        """
         num_vars = 1200
         num_constraints = 700
         
@@ -98,6 +113,9 @@ class LTP:
         return matching_ones
     
     def inference(self, file):
+        """
+        Using the file, convert the file into a bipartite graph. Conduct inferencing and make attempted pivots to optimality.
+        """
         A, b, c, basis = self.load_lp(file)
 
         # Calculate the true optimal value
@@ -147,7 +165,7 @@ class LTP:
             for j in range(3000):
                 entering = torch.argmax(copy_0-feature_1).item()
                 
-                if entering >= 500 and entering <= 1200:
+                if entering >= len(A) and entering <= len(c):
                     copy_0[entering] = float('-inf')
                     continue
                 
@@ -170,7 +188,7 @@ class LTP:
             for j in range(3000):
                 leaving = torch.argmax(copy_1-feature_0).item()
                 
-                if leaving >= 500 and leaving <= 1200:
+                if leaving >= len(A) and leaving <= len(c):
                     copy_1[leaving] = float('-inf')
                     continue
                 

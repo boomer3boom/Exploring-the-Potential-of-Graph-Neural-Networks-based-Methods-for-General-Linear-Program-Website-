@@ -4,6 +4,9 @@ import numpy as np
 import os
 
 def pad_tensor(tensor, target_size, dim=0):
+    """
+    pad the tensor to the desired size.
+    """
     pad_size = list(tensor.size())
     pad_size[dim] = target_size - pad_size[dim]
     padding = torch.zeros(*pad_size, dtype=tensor.dtype)
@@ -13,6 +16,9 @@ def normalize(x, min_val, max_val):
     return (x - min_val) / (max_val - min_val)
 
 def lp_to_bipartite_graph(c, A, b, max_vars, max_constraints):
+    """
+    Convert LP to bipartite graph
+    """
     num_vars = 1200
     num_constraints = len(b)
     

@@ -1,12 +1,27 @@
+import os
+from ml_collections import ConfigDict
 import matplotlib
 matplotlib.use('Agg')  # Use the Agg backend for non-GUI rendering
 
+import numpy as np
+import torch
+from torch import optim
+from torch.utils.data import DataLoader
+
+from IPMGNN_folder.data.utils import args_set_bool, collate_fn_ip
+from IPMGNN_folder.models.hetero_gnn import TripartiteHeteroGNN
+
+import gzip
+import pickle
+from IPMGNN_folder.solver.linprog import linprog
+from torch_scatter import scatter
+
 from scipy.optimize import linprog
-from transformer import *
+from ML.transformer import *
 import numpy as np
 import torch
 import torch.nn as nn
-from arch import *
+from ML.arch import *
 from numpy.linalg import inv
 from sklearn.decomposition import PCA
 from scipy.spatial import ConvexHull
@@ -14,36 +29,34 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+
+from IPMGNN_folder.data.dataset import LPDataset
+from torch_geometric.transforms import Compose
+from IPMGNN_folder.data.data_preprocess import HeteroAddLaplacianEigenvectorPE, SubSample
+import shutil
 import time
 
-class SIB():
-    def __init__(self, primal_path, slack_path):
+class IPMGNN:
+
+    def __init__(self, path):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        # Load the Model Parameter
-        primal_load = torch.load(primal_path, map_location=self.device)
-        slack_load = torch.load(slack_path, map_location=self.device)
+        self.model = TripartiteHeteroGNN(conv='gcnconv',
+                            in_shape=2,
+                            pe_dim=0,
+                            hid_dim=180,
+                            num_conv_layers=8,
+                            num_pred_layers=3,
+                            num_mlp_layers=4,
+                            dropout=0,
+                            share_conv_weight=False,
+                            share_lin_weight=False,
+                            use_norm=True,
+                            use_res=False,
+                            conv_sequence='cov').to(self.device)
         
-        # Generate The Model
-        input_dim = 2
-        hidden_dim = 64
-        self.primal_ml = GCN(input_dim, hidden_dim)
-        self.slack_ml = GCN(input_dim, hidden_dim)
+        self.model.load_state_dict(torch.load(path))
 
-        self.primal_ml.load_state_dict(primal_load['model_state_dict'])
-        self.slack_ml.load_state_dict(slack_load['model_state_dict'])
-
-        self.primal_ml.to(self.device)
-        self.slack_ml.to(self.device)
-
-        self.primal_ml.eval()
-        self.slack_ml.eval()
-    
-    def load_lp(self, data):
-        c = data['c']
-        A = data['A']
-        b = data['b']
-
-        return A, b, c
+        self.model.eval()
     
     def conditional_normalize(self, array):
         max_abs_val = np.max(np.abs(array))
@@ -60,15 +73,7 @@ class SIB():
         c = self.conditional_normalize(c)
 
         return A, b, c
-    
-    def get_matches(self, result, optimal_basis):
-        matching_ones = 0
-        for i in range(len(result)):
-            if result[i] == 1 and optimal_basis[i] == 1:
-                matching_ones += 1
-        
-        return matching_ones
-    
+
     def sample_vertex(self, A, b):
         num_constraints = A.shape[0]
         vertices = []
@@ -89,7 +94,7 @@ class SIB():
                     except:
                         pass
         else:
-            num_samples = 1000
+            num_samples = 200
 
             sampled_pairs = []
             while len(sampled_pairs) < num_samples:
@@ -99,12 +104,17 @@ class SIB():
 
             # Solve for the intersection points of the sampled pairs
             for i, j in sampled_pairs:
-                A_eq = np.array([A[i], A[j]])
-                b_eq = np.array([b[i], b[j]])
-                
+                A_ub = np.array([A[i], A[j]])
+                b_ub = np.array([b[i], b[j]])
+                bounds = (0., 1.)
                 # Try to find the intersection point
                 try:
-                    res = linprog(c=np.zeros(A.shape[1]), A_eq=A_eq, b_eq=b_eq, bounds=[(None, None)]*A.shape[1])
+                    A_eq = None
+                    b_eq = None
+                    res = linprog(c=np.zeros(A.shape[1]), 
+                            A_ub=A_ub,
+                            b_ub=b_ub,
+                            A_eq=A_eq, b_eq=b_eq, bounds=bounds, method='interior-point')
                     if res.success:
                         vertices.append(res.x)
                 except:
@@ -112,36 +122,18 @@ class SIB():
         
         return np.array(vertices)
     
-    def get_visual(self, data, basis_indices, optimal_indices):
-        # Unlock the file
-        A, b, c = self.load_lp(data)
-
-        # Normalise to -1 and 1
-        A, b, c = self.normalise(A, b, c)
-        
+    def get_visual(self, A, b, c, pred, opt):        
         vertices = self.sample_vertex(A, b)
-        # Extract the basis matrix B from A
-        B_init = A[:, basis_indices]
-        B_optimal = A[:, optimal_indices]
-        
-        # Calculate the inverse of B
-        B_init_inv = inv(B_init)
-        B_optimal_inv = inv(B_optimal)
 
-        # Calculate the basic variables x^b
-        x_b_init = np.dot(B_init_inv, b)
-        x_b_optimal = np.dot(B_optimal_inv, b)
-
-        # Initialize x_b array with zeros
-        x_b_init_full = np.zeros(vertices.shape[1])
-        x_b_optimal_full = np.zeros(vertices.shape[1])
-
-        # Place x_b values into the correct positions
-        x_b_init_full[basis_indices] = x_b_init
-        x_b_optimal_full[optimal_indices] = x_b_optimal
         
         # Combine vertices with x_b
-        combined_vertices = np.vstack([vertices, x_b_init_full, x_b_optimal_full])
+        try:
+            pred = pred.T
+            opt = opt.T
+            # Combine vertices with pred and opt
+            combined_vertices = np.vstack([vertices, pred, opt])
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
         # Apply PCA to reduce dimensions to 3D for visualization
         pca = PCA(n_components=3)
@@ -198,8 +190,6 @@ class SIB():
         if top_vertices.shape[0] > 0:
             # Add the origin to the vertices
             vertices_with_origin = np.vstack([top_vertices])
-            # Compute convex hull including the origin
-            #hull = ConvexHull(vertices_with_origin)
 
             # Plot the top 20 prominent vertices in 3D
             fig = plt.figure(figsize=(10, 8))
@@ -208,12 +198,6 @@ class SIB():
             #Plot all vertices with some transparency
             ax.scatter(vertices_with_origin[:, 0], vertices_with_origin[:, 1], vertices_with_origin[:, 2], 
                     c='grey', marker='o', s=30, alpha=0.5)  # Adjusted transparency with alpha
-
-            # Plot the simplices (triangular faces of the polyhedron)
-            #for simplex in hull.simplices:
-            #    triangle = vertices_with_origin[simplex]
-            #    poly = Poly3DCollection([triangle], facecolors='cyan', linewidths=1, edgecolors='black', alpha=0.2)
-            #    ax.add_collection3d(poly)
 
             # Plot the origin point as a more prominent black dot
             ax.scatter(0, 0, 0, c='black', marker='o', s=100, edgecolor=None)  # Larger size, no edge color
@@ -248,107 +232,90 @@ class SIB():
         else:
             return "Could Not Display Image"
     
-    def inference(self, data):
-        # Unlock the file
-        A, b, c = self.load_lp(data)
+    def load_lp(self, file):
+        ip_pkgs = pickle.load(file)
 
-        # Check the LP arrays are numpy
-        if not isinstance(A, np.ndarray) or not isinstance(b, np.ndarray) or not isinstance(c, np.ndarray):
-            return "Please Include Use Numpy Array", 0
+        return ip_pkgs[0]
+    
+    def inference(self, A, b, c):
+        root = '/home/ac/website'
+        ips = []
+        pkg_idx = 0
+        success_cnt = 0
+        bounds = (0., 1.)
+        try:
+            A_eq = None
+            b_eq = None
+            A_ub = A
+            b_ub = b
+            res = linprog(c, 
+                    A_ub=A_ub,
+                    b_ub=b_ub,
+                    A_eq=A_eq, b_eq=b_eq, bounds=bounds, method='interior-point')
+        except:
+            return "error", 0, 0, 0
+        else:
+            if res.success and not np.isnan(res.fun):
+                ips.append((A, b, c))
+                success_cnt += 1
+                with gzip.open(f'{root}/IPMGNN_folder/raw/instance_{pkg_idx}.pkl.gz', "wb") as file:
+                    pickle.dump(ips, file)
+            else:
+                return "error", 0, 0, 0
+            
+        dataset = LPDataset("/home/ac/website/IPMGNN_folder",
+                extra_path=f'{1}restarts_'
+                                    f'{0}lap_'
+                                    f'{8}steps'
+                                    f'{"_upper_" + str(1.0)}',
+                upper_bound=1.0,
+                rand_starts=1,
+                pre_transform=Compose([HeteroAddLaplacianEigenvectorPE(k=0),
+                                                SubSample(8)]))
 
-        # Check the LP array contains only numerical numbers
-        if not np.issubdtype(A.dtype, np.number) or not np.issubdtype(b.dtype, np.number) or not np.issubdtype(c.dtype, np.number):
-            return "Please ensure LP are numerical", 0
-
-        number_of_constraint = A.shape[0]
-        number_of_variables = c.shape[0] - number_of_constraint
-
-        # Check the file shape is eligible
-        if number_of_constraint > 700 or number_of_variables > 500:
-            return "Shape is not Eligible", 0
-
-        # Check if basis exist already
-        if not np.all(c[number_of_variables:] == 0):
-            return "Please Include Slack Variables", 0
-
-        # Normalise to -1 and 1
-        A, b, c = self.normalise(A, b, c)
-
-        # Calculate the true optimal value
-        correct_result = linprog(c, A_ub=A, b_ub=b, method='highs')
-
-        # Check if Solution is feasible
-        if not correct_result.success:
-            return "The solution is not feasible", 0
+        # feed problem to model
+        test_loader = DataLoader(dataset,
+                                batch_size=1,
+                                shuffle=False,
+                                num_workers=1,
+                                collate_fn=collate_fn_ip)
         
-        # Check if Solution is bounded
-        if not correct_result.status == 0:
-            return "The solution is unbounded or there was an issue", 0
-        
-        # Calculate Optimal Basis
-        tolerance = 1e-9
-        in_basis = [1 if v > tolerance else 0 for v in correct_result.x]
-        slack_in_basis = [1 if s >= tolerance else 0 for s in correct_result.slack]
-        in_basis = np.array(in_basis)
-        slack_in_basis = np.array(slack_in_basis)
-        optimal_basis = np.concatenate((in_basis, slack_in_basis))
-        
-        # Pad LP to required shape
-        target_c_size = 1200
-        target_A_shape = (700, 1200)
-        target_b_size = 700
-
-        # Pad c, A, b
-        c_slack = np.pad(c, (0, target_c_size - len(c)), 'constant')
-        A_slack = np.pad(A, ((0, target_A_shape[0] - A.shape[0]), (0, target_A_shape[1] - A.shape[1])), 'constant')
-        b_combined = np.pad(b, (0, target_b_size - len(b)), 'constant')
-
-        # Transform to Bipartite Graph
-        input_graph = lp_to_bipartite_graph(c_slack, A_slack, b_combined, 1200, 700)
-        input_graph.to(self.device)
         start_time = time.time()
-        
-        # Inference and get probabilities
         with torch.no_grad():
-            # Forward pass through the primal model
-            try:
-                primal_output = self.primal_ml(input_graph)
-            except Exception as e:
-                print(e)
+            for data in test_loader:
+                data.to(self.device)
+                try:
+                    pred, _ = self.model(data)
+                except Exception as e:
+                    print(e)
 
-            # Forward pass through the slack model
-            slack_output = self.slack_ml(input_graph)
-        end_time = time.time()
-        inference_time = end_time - start_time
-        
-        # Keep only the first k elements from slack_output and first j elements from primal_output
-        filtered_primal_output = primal_output[:number_of_variables]
-        filtered_slack_output = slack_output[:number_of_constraint]
+                end_time = time.time()
+                inference_time = end_time - start_time
 
-        # Collect Result as one Single output
-        collected_results = []
-        collected_results.extend(filtered_primal_output.cpu().numpy())
-        collected_results.extend(filtered_slack_output.cpu().numpy())
 
-        # Take the first number_of_constraint highest probability as basic
-        top_k_indices = sorted(range(len(collected_results)), key=lambda i: collected_results[i], reverse=True)[:number_of_constraint]
+                # Caluclate Objective Gap
+                pred = pred[:, -8:]
+                pred = torch.relu(pred)
+                c_times_x = data.obj_const[:, None] * pred
+                obj_pred = scatter(c_times_x, data['vals'].batch, dim=0, reduce='sum')
 
-        # Initialize a result list with zeros
-        result = [0] * len(collected_results)
+                x_gt = data.gt_primals[:, -8:]
+                c_times_xgt = data.obj_const[:, None] * x_gt
+                obj_gt = scatter(c_times_xgt, data['vals'].batch, dim=0, reduce='sum')
+                obj_gap = (obj_pred - obj_gt) / obj_gt
+                obj_gap = np.abs(obj_gap.detach().cpu().numpy())
+    
 
-        # Set top k probabilities to 1
-        for idx in top_k_indices:
-            result[idx] = 1
+                Ax = scatter(pred[data.A_col, :] * data.A_val[:, None], data.A_row, reduce='sum', dim=0)
+                constraint_gap = Ax - data.rhs[:, None]
+                constraint_gap = torch.relu(constraint_gap)
+                constraint_gap = np.abs(constraint_gap.detach().cpu().numpy())
 
-        # Set to numpy array
-        result = np.array(result)
-        part1 = optimal_basis[:number_of_variables]
-        part2 = optimal_basis[number_of_variables+number_of_constraint:number_of_variables+number_of_constraint+number_of_constraint]
-        optimal_basis = np.concatenate((part1,part2))
+        os.remove(f'{root}/IPMGNN_folder/raw/instance_{pkg_idx}.pkl.gz')
+        try:
+            shutil.rmtree('/home/ac/website/IPMGNN_folder/processed_1restarts_0lap_8steps_upper_1.0')
+        except Exception as e:
+            print(e)
 
-        accuracy = self.get_matches(result, optimal_basis) / number_of_constraint
-
-        predicted_basis_indices = np.where(result == 1)[0].tolist()
-        optimal_basis_indices = np.where(optimal_basis == 1)[0].tolist()
-
-        return predicted_basis_indices, optimal_basis_indices, accuracy*100, inference_time
+        return pred.detach().cpu().numpy(), x_gt.detach().cpu().numpy(),\
+            np.concatenate(obj_gap, axis=0).mean().item(), constraint_gap.mean().item(), inference_time

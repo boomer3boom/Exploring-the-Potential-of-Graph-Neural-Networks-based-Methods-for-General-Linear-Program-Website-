@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 import numpy as np
 from flask_cors import CORS
-from SIB import *
-from IPMGNN import *
-from LTP import *
+from ML.SIB import *
+from ML.IPMGNN import *
+from ML.LTP import *
 from IPMGNN_folder.data.dataset import LPDataset
 from torch_geometric.transforms import Compose
 from IPMGNN_folder.data.data_preprocess import HeteroAddLaplacianEigenvectorPE, SubSample
@@ -13,17 +13,17 @@ app = Flask(__name__)
 CORS(app)
 
 # SIB
-primal_parameter = '/home/ac/website/primal.pth'
-slack_parameter = '/home/ac/website/slack.pth'
+primal_parameter = 'website/ML/primal.pth'
+slack_parameter = 'website/ML/slack.pth'
 SIB_learner = SIB(primal_path=primal_parameter, slack_path=slack_parameter)
 
 
 # LTP
-LTP_parameter = '/home/ac/website/pivot_learner.pth'
+LTP_parameter = 'website/ML/pivot_learner.pth'
 LTP_learner = LTP(path=LTP_parameter)
 
 # IPMMGNN
-IPMGNN_parameter = '/home/ac/website/ipmgnn.pt'
+IPMGNN_parameter = 'website/ML/ipmgnn.pt'
 IPMGNN_learner = IPMGNN(path=IPMGNN_parameter)
 
 @app.route('/')
@@ -130,4 +130,4 @@ def process_lp():
             return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
