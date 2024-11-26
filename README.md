@@ -1,12 +1,12 @@
 # Exploring the Potential of Foundational Models on GNN for Linear Programs
 
-Welcome to the repository accompanying the paper **[Insert Paper Title Here]**. This project features a website that demonstrates how various Graph Neural Network (GNN) models can generate an initial greedy starting point, enabling faster convergence to optimality using optimization techniques such as the Simplex Method or Interior Point Method.
+Welcome to the repository accompanying the paper **Exploring the Potential of Foundational Models on GNN for Linear Programs**. This project features a website that demonstrates how various Graph Neural Network (GNN) models can generate an initial greedy starting point, enabling faster convergence to optimality using optimization techniques such as the Simplex Method or Interior Point Method.
 
 The website allows users to experiment with the following pre-trained GNN models:
 
 - **Smart Initial Basis (SIB)**
 - **Learn To Pivot (LTP)**
-- **Interior Point Message Passing Neural Network (IPMGNN)**
+- **Interior Point Message-Passing Graph Neural Network (IPMGNN)**
 
 ---
 
