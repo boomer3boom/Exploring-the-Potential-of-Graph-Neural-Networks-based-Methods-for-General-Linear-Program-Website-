@@ -24,8 +24,8 @@ Dependencies are listed in `requirements.txt`. Please ensure you download compat
 
 1. Clone this repository:
    ```bash
-   git clone [repository_url]
-   cd [repository_folder]
+   git clone https://github.com/boomer3boom/Exploring-the-Potential-of-Graph-Neural-Networks-based-Methods-for-General-Linear-Program-Website-
+   cd Exploring-the-Potential-of-Graph-Neural-Networks-based-Methods-for-General-Linear-Program-Website-
 
 2. Download the required dependencies: \
    `see requirements.txt on our dependencies but download the packages that are compatible with your setup`
