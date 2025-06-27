@@ -1,6 +1,6 @@
 # Exploring the Potential of Graph Neural Networks-based Methods for General Linear Program
 
-Welcome to the repository accompanying the paper **Exploring the Potential of Graph Neural Networks-based Methods for General Linear Program**. This project features a website that demonstrates how various Graph Neural Network (GNN) models can generate an initial greedy starting point, enabling faster convergence to optimality using optimization techniques such as the Simplex Method or Interior Point Method.
+Welcome to the repository accompanying the paper **Exploring the Potential of Graph Neural Networks-based Methods for General Linear Program**, https://dl.acm.org/doi/10.1145/3701716.3715174 \ This project features a website that demonstrates how various Graph Neural Network (GNN) models can generate an initial greedy starting point, enabling faster convergence to optimality using optimization techniques such as the Simplex Method or Interior Point Method.
 
 The website allows users to experiment with the following pre-trained GNN models:
 
